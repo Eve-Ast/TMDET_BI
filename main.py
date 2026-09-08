@@ -6,16 +6,31 @@ import os
 
 
 if __name__ == "__main__" : 
-# Setup de l'analyseur d'arguments
+# 1. Configuration des arguments en ligne de commande
     parser = argparse.ArgumentParser(
         description="PDB Protein Membrane Orientation Scanner"
     )
+    
+    # Argument obligatoire (positionnel)
     parser.add_argument(
         "pdb_file",
         type=str,
-        help="Nom du fichier PDB ou chemin complet (ex: 1QHJ ou 1QHJ.pdb)",
+        help="Nom du fichier PDB ou chemin complet (ex: 1PRN ou 1PRN.pdb)",
     )
+    
+    # Argument optionnel avec valeur par défaut
+    parser.add_argument(
+        "--method",
+        type=str,
+        choices=["method1", "method2"],
+        default="method2",
+        help="Méthode de scan à utiliser (par défaut: method2)",
+    )
+    
     args = parser.parse_args()
+
+    # 2. Traitement du nom de fichier et des chemins
+    method = args.method
 
     # Traitement de l'argument (ajoute .pdb si non présent)
     pdb_input = args.pdb_file
@@ -35,8 +50,8 @@ if __name__ == "__main__" :
 
     proteine = Protein("prot")
     print(proteine)
-    #rsa_path = proteine.run_naccess(pdb_path)
-    rsa_path = r"result\1G90.rsa"
+    # rsa_path = proteine.run_naccess(pdb_path)
+    rsa_path = r"result\1PRN.rsa"
     proteine.extract_calpha_coords_and_sasa(pdb_path, rsa_path)
     # print(proteine)
 
@@ -53,11 +68,14 @@ if __name__ == "__main__" :
     # print(grid)
 
     # 3. La grille scannne la protéine
-    results = grid.scan_protein(proteine)
+    if method == "method1" : 
+        result = grid.scan_protein_meth_1(proteine)
+    else : 
+        result = grid.scan_protein_meth_2(proteine)
 
-    best_axis = results["best_axis"]
-    best_score = results["best_score"]
-    z_center = results["z_center"]
+    best_axis = result["best_axis"]
+    best_score = result["best_score"]
+    z_center = result["z_center"]
 
     print("\n=== RÉSULTATS DU SCAN PAR LA GRILLE ===")
     print(f"Meilleur axe détecté : {best_axis}")

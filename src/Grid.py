@@ -26,7 +26,7 @@ class Grid :
 
             self.axis_list.append(np.array([x, y, z]))
 
-    def scan_protein(self, protein, min_sasa=15.0, memb_thickness=30.0):
+    def scan_protein_meth_2(self, protein, min_sasa=15.0, memb_thickness=30.0):
         """Scanne la protéine vectoriellement avec un score d'octanol/eau ou de contraste."""
         coords, hydros = protein.get_arrays(min_sasa=min_sasa)
 
@@ -74,6 +74,75 @@ class Grid :
                     best_score = score
                     best_axis = axis_norm
                     best_z_shift = z_center
+
+        return {
+            "best_score": best_score,
+            "best_axis": best_axis,
+            "z_center": best_z_shift,
+        }
+    
+    def compute_axis_profile(self, protein, axis_vector, min_sasa=30.0):
+        projections = []
+        hydrophobicities = []
+
+        # Normalisation du vecteur axe
+        axis_norm = axis_vector / np.linalg.norm(axis_vector)
+
+        for res in protein.list_res:
+            if res.sasa >= min_sasa:
+                # Produit scalaire = projection sur l'axe
+                proj = (
+                    res.x * axis_norm[0]
+                    + res.y * axis_norm[1]
+                    + res.z * axis_norm[2]
+                )
+                projections.append(proj)
+                hydrophobicities.append(res.hydrophobicity)
+
+        if not projections:
+            return [], 0.0
+
+        projections = np.array(projections)
+        hydrophobicities = np.array(hydrophobicities)
+
+        min_p = float(np.min(projections))
+        max_p = float(np.max(projections))
+
+        # Tranches de 1 Angstrom
+        bins = np.arange(math.floor(min_p), math.ceil(max_p) + 1, 1.0)
+        hydro_profile = []
+
+        for i in range(len(bins) - 1):
+            mask = (projections >= bins[i]) & (projections < bins[i + 1])
+            if np.any(mask):
+                hydro_profile.append(np.mean(hydrophobicities[mask]))
+            else:
+                hydro_profile.append(0.0)
+
+        return hydro_profile, min_p
+
+    def scan_protein_meth_1(self, protein, min_sasa=15.0, memb_thickness=30):
+        best_score = -float("inf")
+        best_axis = None
+        best_z_shift = 0.0
+
+        for axis in self.axis_list:
+            hydro_profile, min_p = self.compute_axis_profile(
+                protein, axis, min_sasa=min_sasa
+            )
+
+            if len(hydro_profile) < memb_thickness:
+                continue
+
+            for i in range(len(hydro_profile) - memb_thickness + 1):
+                slice_30 = hydro_profile[i : i + memb_thickness]
+                score = np.mean(slice_30)
+
+                if score > best_score:
+                    best_score = score
+                    best_axis = axis
+                    # Décalage réel par rapport à l'origine (0,0,0)
+                    best_z_shift = min_p + i + (memb_thickness / 2.0)
 
         return {
             "best_score": best_score,
