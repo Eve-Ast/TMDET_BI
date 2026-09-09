@@ -27,7 +27,7 @@ class Grid :
             self.axis_list.append(np.array([x, y, z]))
 
     
-    def compute_axis_profile(self, protein, axis_vector, min_sasa=30.0):
+    def compute_axis_profile(self, protein, axis_vector, min_sasa=25.0):
         projections = []
         hydrophobicities = []
 
@@ -67,7 +67,7 @@ class Grid :
 
         return hydro_profile, min_p
 
-    def scan_protein_meth_1_non_vectorized(self, protein, min_sasa=15.0, memb_thickness=30):
+    def scan_protein_meth_1_non_vectorized(self, protein, min_sasa=25.0, memb_thickness=30):
         best_score = -float("inf")
         best_axis = None
         best_z_shift = 0.0
@@ -96,7 +96,7 @@ class Grid :
             "z_center": best_z_shift,
         }
 
-    def compute_axis_profile_vectorized(self, protein, axis_vector, min_sasa=30.0):
+    def compute_axis_profile_vectorized(self, protein, axis_vector, min_sasa=25.0):
         axis_norm = axis_vector / np.linalg.norm(axis_vector)
         coords, hydros = protein.get_arrays(min_sasa=min_sasa)
 
@@ -120,7 +120,7 @@ class Grid :
 
         return profile, float(min_p)
 
-    def scan_protein_meth_1_vectorized(self, protein, min_sasa=15.0, memb_thickness=30):
+    def scan_protein_meth_1_vectorized(self, protein, min_sasa=25.0, memb_thickness=30):
         best_score = -float("inf")
         best_axis = None
         best_z_shift = 0.0
@@ -144,7 +144,7 @@ class Grid :
 
         return {"best_score": best_score, "best_axis": best_axis, "z_center": best_z_shift}
 
-    def scan_protein_meth_2_non_vectorized(self, protein, min_sasa=15.0, memb_thickness=30.0):
+    def scan_protein_meth_2_non_vectorized(self, protein, min_sasa=25.0, memb_thickness=30.0):
         half_thick = memb_thickness / 2.0
         filtered = [r for r in protein.list_res if r.sasa >= min_sasa]
         if not filtered:
