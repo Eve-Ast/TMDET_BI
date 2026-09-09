@@ -9,13 +9,13 @@ proteine = Protein("prot")
 proteine.extract_calpha_coords_and_sasa(pdb_path, rsa_path)
 proteine.center_protein()
 
-grid_test = Grid(n_points=700)  # réduit pour comparer les 4 variantes équitablement
+grid_test = Grid(n_points=30)  # réduit pour comparer les 4 variantes équitablement
 
 variants = {
-    "Méth. 1 - non vectorisée": lambda: grid_test.scan_protein_meth_1(proteine),
+    "Méth. 1 - non vectorisée": lambda: grid_test.scan_protein_meth_1_non_vectorized(proteine),
     "Méth. 1 - vectorisée": lambda: grid_test.scan_protein_meth_1_vectorized(proteine),
     "Méth. 2 - non vectorisée": lambda: grid_test.scan_protein_meth_2_non_vectorized(proteine),
-    "Méth. 2 - vectorisée": lambda: grid_test.scan_protein_meth_2(proteine),
+    "Méth. 2 - vectorisée": lambda: grid_test.scan_protein_meth_2_vectorized(proteine),
 }
 
 for name, func in variants.items():
