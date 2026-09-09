@@ -10,45 +10,136 @@ KYTE_DOLITTLE = {"ILE": 4.5, "VAL": 4.2, "LEU": 3.8, "PHE": 2.8, "CYS": 2.5, "ME
     "HIS": -3.2, "GLU": -3.5, "GLN": -3.5, "ASP": -3.5, "ASN": -3.5, "LYS": -3.9, "ARG": -4.5, 
     }
 
-class Residue :
-    """Resume court 
-     Explication plus detaillé si nécessaire
-     Args : 
-        paramètres : description
+class Residue:
+    """
+    Represent a protein residue and its associated properties.
+
+    A residue is described by its name, residue number, three-dimensional
+    coordinates, solvent-accessible surface area (SASA), and hydrophobicity.
+
+    Attributes
+    ----------
+    residue_name : str
+        Name of the residue using its three-letter code.
+    res_num : int
+        Residue number in the protein sequence.
+    x : float
+        X-coordinate of the residue.
+    y : float
+        Y-coordinate of the residue.
+    z : float
+        Z-coordinate of the residue.
+    sasa : float
+        Solvent-accessible surface area of the residue in Å².
+    hydrophobicity : float
+        Hydrophobicity value associated with the residue.
     """
 
-    def __init__(self, residue_name, res_num, x, y, z , sasa, hydrophobicity):
+    def __init__(self, residue_name, res_num, x, y, z, sasa, hydrophobicity):
+        """
+        Initialize a Residue object.
+        """
         self.residue_name = residue_name
         self.res_num = res_num
         self.x = x
         self.y = y
         self.z = z
-        self.sasa = sasa 
+        self.sasa = sasa
         self.hydrophobicity = hydrophobicity
 
-
     def __str__(self):
-        chaine = f"residue {self.residue_name} {self.res_num}, " \
-                    f"coord: ({self.x:.3f}, {self.y:.3f}, {self.z:.3f}), "\
-                    f"sasa: ({self.sasa}), " \
-                    f"hydrophobicity: ({self.hydrophobicity}) \n"
+        """
+        Return a formatted string describing the residue.
+
+        Returns
+        -------
+        str
+            String containing the residue name, residue number,
+            three-dimensional coordinates, SASA, and hydrophobicity.
+        """
+        chaine = (
+            f"residue {self.residue_name} {self.res_num}, "
+            f"coord: ({self.x:.3f}, {self.y:.3f}, {self.z:.3f}), "
+            f"sasa: ({self.sasa}), "
+            f"hydrophobicity: ({self.hydrophobicity})\n"
+        )
         return chaine
                      
     
 
 class Protein :
+    """Represent a protein and its associated residues.
+    
+    Attributes
+    ----------
+    protein_name : str
+        Name or identifier of the protein.
+    list_res : list of Residue
+        List containing the residues belonging to the protein.
+    """
 
     def __init__(self, protein_name):
+        """
+        Initialize a Protein object.
+
+        Parameters
+        ----------
+        protein_name : str
+            Name or identifier of the protein.
+        """
+
         self.protein_name = protein_name
         self.list_res = []
 
     def add_res(self, res):
-        """resume"""
+        """
+        Add a residue to the protein.
+
+        The residue is added only if it is an instance of the
+        ``Residue`` class.
+
+        Parameters
+        ----------
+        res : Residue
+            Residue to add to the protein.
+        """
+
         if isinstance (res, Residue): 
             self.list_res.append(res)
 
     def run_naccess(self, pdb_path, naccess_bin="naccess", output_dir = "result"):
-        """"""
+        """
+        Run NACCESS to calculate the solvent-accessible surface area.
+
+        NACCESS is executed on the provided PDB file. The generated
+        ``.rsa``, ``.asa`` and ``.log`` files are moved to the specified
+        output directory. The path to the generated ``.rsa`` file is
+        returned.
+
+        Parameters
+        ----------
+        pdb_path : str
+            Path to the input PDB file.
+        naccess_bin : str, optional
+            Name or path of the NACCESS executable. Default is
+            ``"naccess"``.
+        output_dir : str, optional
+            Directory where the NACCESS output files are stored.
+            Default is ``"result"``.
+
+        Returns
+        -------
+        str
+            Path to the generated ``.rsa`` file.
+
+        Raises
+        ------
+        FileNotFoundError
+            If the PDB file does not exist or the expected ``.rsa`` file
+            cannot be found.
+        RuntimeError
+            If NACCESS fails during execution.
+        """
         abs_pdb_path = os.path.abspath(pdb_path)
         # Verification existence du fichier pdb
         if not os.path.exists(pdb_path):
@@ -85,7 +176,24 @@ class Protein :
         
 
     def extract_calpha_coords_and_sasa (self, pdb_path, rsa_path): 
-        """"""
+        """
+        Extract C-alpha coordinates, SASA, and hydrophobicity for each residue.
+
+        The PDB file is parsed to retrieve the three-dimensional coordinates
+        of C-alpha atoms from chain A. The corresponding residue SASA values
+        are obtained from the NACCESS ``.rsa`` file. A hydrophobicity value
+        is assigned to each residue using the Kyte-Doolittle scale.
+
+        The resulting residues are created as ``Residue`` objects and added
+        to the protein.
+
+        Parameters
+        ----------
+        pdb_path : str
+            Path to the input PDB file containing the protein structure.
+        rsa_path : str
+            Path to the NACCESS ``.rsa`` file containing residue SASA values.
+        """
         sasa_dict = {}
 
         with open(rsa_path, "r") as rsa_file:
@@ -127,7 +235,17 @@ class Protein :
                         self.list_res.append(res)
 
     def calc_com(self): 
-        """"""
+        """
+        Calculate the geometric center of the protein.
+
+        The center is calculated as the mean of the x, y, and z coordinates
+        of all residues in the protein.
+
+        Returns
+        -------
+        tuple of float
+            Coordinates of the center of mass as ``(com_x, com_y, com_z)``.
+        """
         nb_res = len(self.list_res)
         sum_x = 0 
         sum_y = 0 
@@ -145,7 +263,14 @@ class Protein :
         return com_x, com_y, com_z
 
     def center_protein(self):
-        """"""
+        """
+        Center the protein coordinates around its geometric center.
+
+        The geometric center of the protein is first calculated using
+        ``calc_com``. The center coordinates are then subtracted from
+        the coordinates of every residue so that the protein is centered
+        at the origin.
+        """
         com_x, com_y, com_z = self.calc_com()
 
         for res in self.list_res: 
@@ -154,7 +279,28 @@ class Protein :
             res.z -= com_z
 
     def get_arrays(self, min_sasa=15.0):
-        """Vectorise les données pour accélérer le calcul avec NumPy."""
+        """
+        Convert residue data into NumPy arrays for numerical computations.
+
+        Only residues with a SASA greater than or equal to ``min_sasa``
+        are selected. If no residue satisfies this threshold, all residues
+        are used as a fallback.
+
+        Parameters
+        ----------
+        min_sasa : float, optional
+            Minimum SASA value required for a residue to be included.
+            Default is 15.0 Å².
+
+        Returns
+        -------
+        coords : numpy.ndarray
+            Array of residue coordinates with shape ``(n, 3)``.
+        hydros : numpy.ndarray
+            One-dimensional array containing the hydrophobicity value
+            of each selected residue.
+        """
+
         filtered = [r for r in self.list_res if r.sasa >= min_sasa]
         if not filtered:
             filtered = self.list_res  # Secours si SASA n'est pas remplie
@@ -165,7 +311,31 @@ class Protein :
 
     @staticmethod
     def compute_rotation_matrix(v1, v2=np.array([0.0, 0.0, 1.0])):
-        """Calcule la matrice de rotation 3x3 pour aligner le vecteur v1 sur v2 (axe Z canonique)."""
+        """
+        Compute a rotation matrix that aligns one vector with another.
+
+        The input vectors are normalized before calculating the rotation.
+        The rotation matrix is constructed using the cross product and
+        Rodrigues' rotation formula. By default, the target vector is
+        the canonical Z-axis.
+
+        Parameters
+        ----------
+        v1 : numpy.ndarray
+            Three-dimensional vector to be aligned.
+        v2 : numpy.ndarray, optional
+            Three-dimensional target vector. Default is
+            ``[0.0, 0.0, 1.0]``.
+
+        Returns
+        -------
+        numpy.ndarray
+            A 3 × 3 rotation matrix that aligns ``v1`` with ``v2``.
+            If the vectors are already aligned, the identity matrix is
+            returned. If they are opposite, the negative identity matrix
+            is returned.
+        """
+
         v1 = v1 / np.linalg.norm(v1)
         v2 = v2 / np.linalg.norm(v2)
         v = np.cross(v1, v2)
@@ -181,7 +351,25 @@ class Protein :
     
 
     def show_in_pymol(self, best_axis, z_center, memb_thickness=30):
-        """Génère un PDB réorienté et lance PyMOL avec la membrane affichée."""
+        """
+        Generate a reoriented PDB file and visualize the protein in PyMOL.
+
+        The protein is rotated so that the selected membrane axis is aligned
+        with the Z-axis. The protein is then shifted along the Z-axis so that
+        the membrane center is positioned at zero. A PyMOL script is generated
+        to display the protein together with the two planes representing the
+        membrane boundaries.
+
+        Parameters
+        ----------
+        best_axis : numpy.ndarray
+            Three-dimensional vector corresponding to the optimal membrane
+            orientation.
+        z_center : float
+            Position of the center of the membrane along the selected axis.
+        memb_thickness : float, optional
+            Thickness of the membrane in Å. Default is 30 Å.
+        """
         R = self.compute_rotation_matrix(best_axis)
         half_thick = memb_thickness / 2.0
 
