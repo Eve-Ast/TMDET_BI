@@ -22,8 +22,8 @@ if __name__ == "__main__" :
     parser.add_argument(
         "--method",
         type=str,
-        choices=["method1", "method2"],
-        default="method2",
+        choices=["method1_vec", "method2_vec", "method1_novec", "method2_novec"],
+        default="method2_vec",
         help="Méthode de scan à utiliser (par défaut: method2)",
     )
     
@@ -68,10 +68,15 @@ if __name__ == "__main__" :
     # print(grid)
 
     # 3. La grille scannne la protéine
-    if method == "method1" : 
-        result = grid.scan_protein_meth_1(proteine)
-    else : 
-        result = grid.scan_protein_meth_2(proteine)
+    if method == "method1_novec" : 
+        result = grid.scan_protein_meth_1_non_vectorized(proteine)
+    elif method == "method1_vec" : 
+        result = grid.scan_protein_meth_1_vectorized(proteine)
+    elif method == "method2_novec": 
+        result = grid.scan_protein_meth_2_non_vectorized(proteine)
+    elif method == "method2_vec": 
+        result = grid.scan_protein_meth_2_vectorized(proteine)
+
 
     best_axis = result["best_axis"]
     best_score = result["best_score"]
