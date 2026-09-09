@@ -1,17 +1,57 @@
 import math
 import numpy as np
 
+"""
+Grid module for scanning protein membrane orientations.
+
+This module provides the ``Grid`` class, which generates a set of
+candidate orientation vectors distributed over a unit sphere and uses
+these vectors to analyze the hydrophobicity of a protein along different
+axes.
+
+Two approaches are implemented for identifying the optimal membrane
+orientation. The first method searches for the region with the highest
+mean hydrophobicity, while the second method maximizes the contrast
+between the mean hydrophobicity inside and outside the membrane region.
+
+Both non-vectorized and partially vectorized implementations are
+provided to compare their computational performance.
+"""
 
 class Grid : 
-    """"""
+    """
+    A class to generate and representes a grid of vectors
+
+    ...
+
+    Attributes
+    ----------
+    n_points : int
+        Number of vector generated.
+    axis_list : list
+        List of all the vector generated
+
+    Methods
+    -------
+    _generate_fibonnaci_sphere : 
+        Generation of the vector 
+    compute_axis_profile : 
+        Compute axis profil for the first methode of 
+    scan_protein_method1_non_vectorized and scan protein_method1_vectorized : 
+        first method of scanning the axes
+    scan_protein_method2_non_vectorized and scan protein_method2_vectorized : 
+        second method of scanning the axes
+    """
     def __init__(self, n_points = 1000) :
-        """"""
         self.n_points = n_points
         self.axis_list = []
         self._generate_fibonnacci_sphere()
 
     def _generate_fibonnacci_sphere(self):
-        """"""
+        """
+        Generate a set of evenly distributed points on a unit sphere
+        using the Fibonacci sphere algorithm.
+        """
         phi = math.pi * (math.sqrt(5) - 1) # golden angle in radian
 
         for i in range (self.n_points) : 
@@ -28,6 +68,26 @@ class Grid :
 
     
     def compute_axis_profile(self, protein, axis_vector, min_sasa=25.0):
+        """
+        Compute the hydrophobicity profile of a protein along a given axis.
+        Parameters 
+        ---------- 
+        protein : Protein 
+            Protein object containing the residues to analyze. 
+        axis_vector : numpy.ndarray 
+            Three-dimensional vector defining the axis along which the protein is analyzed. 
+        min_sasa : float, optional 
+            Minimum SASA value required for a residue to be included in the analysis. Default is 25.0 Å. 
+        
+        Returns 
+        ------- 
+        hydro_profile : list of float 
+            Mean hydrophobicity calculated for each 1 Å interval along the selected axis. 
+            Empty intervals are assigned a value of 0.0. 
+        min_p : float 
+            Minimum projection value along the normalized axis. 
+            Returns 0.0 if no residue satisfies the SASA threshold.
+        """
         projections = []
         hydrophobicities = []
 
@@ -68,6 +128,28 @@ class Grid :
         return hydro_profile, min_p
 
     def scan_protein_meth_1_non_vectorized(self, protein, min_sasa=25.0, memb_thickness=30):
+        """
+        Scan a protein over all candidate axes to identify the best membrane orientation using a non-vectorized approach.
+        
+        Parameters 
+        ---------- 
+        protein : Protein 
+            Protein object containing the residues to analyze. 
+        min_sasa : float, optional 
+            Minimum SASA value required for a residue to be included in the hydrophobicity profile. Default is 25.0. 
+        memb_thickness : int, optional 
+            Thickness of the membrane in Å, corresponding to the size of the sliding window used to calculate the hydrophobicity score.
+            Default is 30 Å. 
+        
+        Returns 
+        ------- 
+        dict 
+            Dictionary containing the results of the scan: 
+            ``best_score`` Highest mean hydrophobicity score found. 
+            ``best_axis`` Axis vector corresponding to the highest score. 
+            ``z_center`` Position of the center of the optimal membrane region along the selected axis.
+        """
+        
         best_score = -float("inf")
         best_axis = None
         best_z_shift = 0.0
@@ -97,6 +179,27 @@ class Grid :
         }
 
     def compute_axis_profile_vectorized(self, protein, axis_vector, min_sasa=25.0):
+        """
+        Compute the hydrophobicity profile of a protein along a given axis using a vectorized NumPy implementation.
+
+        Parameters 
+        ----------
+        protein : Protein 
+            Protein object containing the residue coordinates, SASA values, and hydrophobicity values. 
+        axis_vector : numpy.ndarray 
+            Three-dimensional vector defining the axis along which the protein is analyzed. 
+        min_sasa : float, optional 
+            Minimum SASA value required for a residue to be included in the analysis. Default is 25.0. 
+            
+        Returns 
+        ------- 
+        profile : numpy.ndarray 
+            Hydrophobicity profile calculated for each 1 Å interval along the selected axis. 
+            Empty intervals are assigned a value of 0.0. 
+        min_p : float 
+            Minimum projected coordinate along the normalized axis. Returns 0.0 if no residue satisfies the SASA threshold.
+        """
+        
         axis_norm = axis_vector / np.linalg.norm(axis_vector)
         coords, hydros = protein.get_arrays(min_sasa=min_sasa)
 
@@ -121,6 +224,28 @@ class Grid :
         return profile, float(min_p)
 
     def scan_protein_meth_1_vectorized(self, protein, min_sasa=25.0, memb_thickness=30):
+        """ 
+        Scan a protein over all candidate axes to identify the best membrane orientation using a vectorized approach.
+
+        Parameters 
+        ---------- 
+        protein : Protein 
+            Protein object containing the residue coordinates, SASA values, and hydrophobicity values. 
+        min_sasa : float, optional 
+            Minimum SASA value required for a residue to be included in the hydrophobicity profile. Default is 25.0. 
+        memb_thickness : int, optional 
+            Thickness of the membrane in Å, corresponding to the size of the sliding window used to calculate the hydrophobicity score. 
+            Default is 30 Å. 
+        
+        Returns 
+        ------- 
+        dict
+          Dictionary containing the results of the scan:
+            ``best_score`` Highest mean hydrophobicity score found among all candidate membrane regions. 
+            ``best_axis`` Normalized axis vector corresponding to the highest score. 
+            ``z_center`` Position of the center of the optimal membrane region along the selected axis.
+        """
+
         best_score = -float("inf")
         best_axis = None
         best_z_shift = 0.0
@@ -145,6 +270,32 @@ class Grid :
         return {"best_score": best_score, "best_axis": best_axis, "z_center": best_z_shift}
 
     def scan_protein_meth_2_non_vectorized(self, protein, min_sasa=25.0, memb_thickness=30.0):
+        """ 
+        Scan a protein over all candidate axes to identify the best membrane orientation using a non-vectorized approach. 
+        
+        For each candidate axis, the residues satisfying the SASA threshold are projected onto the normalized axis. 
+        A sliding membrane region centered at different positions along the axis is then considered. 
+        For each position, the mean hydrophobicity inside the membrane region is compared with the mean hydrophobicity 
+        outside the membrane region. The difference between these two values is used as the score.
+
+        Parameters 
+        ---------- 
+        protein : Protein 
+            Protein object containing the residue coordinates, SASA values, and hydrophobicity values. 
+        min_sasa : float, optional 
+            Minimum SASA value required for a residue to be included in the analysis. Default is 25.0. 
+        memb_thickness : float, optional 
+            Thickness of the membrane in Å. The membrane region is defined as a symmetric interval of half-thickness around its center. 
+            Default is 30.0 Å. 
+            
+        Returns 
+        ------- 
+        dict 
+            Dictionary containing the results of the scan: 
+                ``best_score`` Highest difference between the mean hydrophobicity inside and outside the membrane region. 
+                ``best_axis`` Normalized axis vector corresponding to the highest score. 
+                ``z_center`` Position of the center of the optimal membrane region along the selected axis.
+        """
         half_thick = memb_thickness / 2.0
         filtered = [r for r in protein.list_res if r.sasa >= min_sasa]
         if not filtered:
@@ -182,8 +333,27 @@ class Grid :
         return {"best_score": best_score, "best_axis": best_axis, "z_center": best_z_shift}
 
 
-    def scan_protein_meth_2_vectorized(self, protein, min_sasa=15.0, memb_thickness=30.0):
-        """Scanne la protéine vectoriellement avec un score d'octanol/eau ou de contraste."""
+    def scan_protein_meth_2_vectorized(self, protein, min_sasa=25.0, memb_thickness=30.0):
+        """
+        Scan a protein over all candidate axes to identify the best membrane orientation using a partially vectorized approach.
+
+        Parameters 
+        ---------- 
+        protein : Protein 
+            Protein object containing the residue coordinates, SASA values, and hydrophobicity values. 
+        min_sasa : float, optional 
+            Minimum SASA value required for a residue to be included in the analysis. Default is 25.0. 
+        memb_thickness : float, optional 
+            Thickness of the membrane in Å. The membrane region is defined as a symmetric interval around its center. Default is 30.0 Å. 
+        
+        Returns 
+        ------- 
+        dict 
+            Dictionary containing the results of the scan: 
+                ``best_score`` Highest difference between the mean hydrophobicity inside and outside the membrane region. 
+                ``best_axis`` Normalized axis vector corresponding to the highest score. 
+                ``z_center`` Position of the center of the optimal membrane region along the selected axis.
+        """
         coords, hydros = protein.get_arrays(min_sasa=min_sasa)
 
         if len(coords) == 0:

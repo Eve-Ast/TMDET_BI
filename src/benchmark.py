@@ -1,7 +1,7 @@
 """
-Benchmarking Module for Protein Membrane Orientation Methods
+Benchmarking Script for Protein Membrane Orientation Methods
 
-This module compares the execution time of the four membrane orientation
+This script compares the execution time of the four membrane orientation
 scanning methods implemented in the Grid class.
 
 The protein structure is loaded from a PDB file and the corresponding
