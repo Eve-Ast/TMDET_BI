@@ -21,8 +21,8 @@ Command-line tool to predict the orientation and position of the lipid membrane 
 ## Installation
 
 ```bash
-git clone <repo-url>
-cd <repo-name>
+git clone https://github.com/Eve-Ast/TMDET_BI.git
+cd TMDET_BI
 pip install -r requirements.txt
 ```
 
