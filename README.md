@@ -35,13 +35,12 @@ The project also relies on the standard library (`argparse`, `math`, `os`, `time
 ├── src/
 │   ├── main.py          # Main script
 │   ├── benchmark.py     # Benchmark script for the methods
-│   ├── Protein.py        # Protein class
-│   └── Grid.py            # Grid class
-├── data/                 # Input PDB files
-└── result/               # Input RSA (SASA) files
+│   ├── Protein.py       # Protein class
+│   └── Grid.py          # Grid class
+├── data/                # Input PDB files
+├── result/              # Input RSA (SASA) files
+└── doc/                 # Bibliography + report
 ```
-
-> ⚠️ Adjust this layout if it differs from your actual project organization.
 
 ## Usage
 
