@@ -123,8 +123,8 @@ if __name__ == "__main__":
     print(proteine)
 
     # Calcul de la surface accessible au solvant avec NACCESS
-    # rsa_path = proteine.run_naccess(pdb_path)
-    rsa_path = r"result\1PRN.rsa"
+    rsa_path = proteine.run_naccess(pdb_path)
+    # rsa_path = r"result\1PRN.rsa"
 
     print(f"  → Fichier RSA utilisé : {rsa_path}")
     print("  → Extraction des coordonnées C-alpha et des SASA...")

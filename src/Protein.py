@@ -445,8 +445,8 @@ class Protein :
 
         # 3. Lancement de PyMOL
         try:
-            subprocess.run(["PyMOLWin", pml_path_out])
+            subprocess.run(["pymol", pml_path_out])
         except FileNotFoundError:
             print(
-                f"Erreur : Impossible de trouver PyMOL à l'emplacement."
+                f"Erreur : Impossible d'ouvrir PyMOL avec la commande indiquée "
             )
